@@ -1,12 +1,3 @@
-"""
-Сервіс для роботи з архівом публікацій.
-Підстава: Постанова КМУ № 1187 від 30.12.2015 —
-  НПП підтверджують досягнення за останні 5 років.
-
-Архів — це ті самі записи в таблиці publications,
-де archived_at IS NOT NULL. Таблиця publication_authors
-використовується без змін.
-"""
 from database import get_connection
 
 PUBLICATION_TYPE_LABELS = {
