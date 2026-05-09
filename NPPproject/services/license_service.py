@@ -1,15 +1,3 @@
-"""
-Формат зберігання авто-полів в license_auto_fields.field_value:
-
-  ""        (порожній рядок / відсутній запис) — поле порожнє
-  "__DB__"                                     — показувати всі з БД
-  '{"ids": ["uuid1", "uuid2"]}'               — вибрані конкретні id
-
-При читанні з фільтром last_5_years:
-  - __DB__        → запит до БД з фільтром року
-  - {"ids":[...]} → запит тільки цих id, але теж з фільтром року
-  - ""            → порожній рядок
-"""
 import json
 from database import get_connection
 from datetime import date
