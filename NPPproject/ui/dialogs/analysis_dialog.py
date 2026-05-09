@@ -1,6 +1,5 @@
 """
 Діалог аналізу відповідності НПП ліцензійним умовам.
-Підстава: КМУ № 1187 від 30.12.2015, п.35-38.
 """
 from datetime import date
 from PySide6.QtWidgets import (
