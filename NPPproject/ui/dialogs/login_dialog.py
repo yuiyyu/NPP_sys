@@ -1,5 +1,4 @@
 import sys
-import os
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel,
     QLineEdit, QPushButton, QMessageBox
@@ -72,11 +71,11 @@ class LoginDialog(QDialog):
         layout.addWidget(title)
 
         # Підказка
-        if self._is_first:
-            hint_text = "Перший запуск. Створіть пароль (3–16 символів)."
-        else:
-            hint_text = "Введіть пароль для входу до системи."
-        hint = QLabel(hint_text)
+        hint = QLabel(
+            "Перший запуск. Створіть пароль (3–16 символів)."
+            if self._is_first else
+            "Введіть пароль для входу до системи."
+        )
         hint.setWordWrap(True)
         hint.setAlignment(Qt.AlignCenter)
         hint.setStyleSheet("color: #7f8c8d; font-size: 12px;")
@@ -125,8 +124,7 @@ class LoginDialog(QDialog):
             confirm = self.confirm_input.text()
             if password != confirm:
                 QMessageBox.warning(
-                    self, "Помилка",
-                    "Паролі не співпадають."
+                    self, "Помилка", "Паролі не співпадають."
                 )
                 return
             save_password(password)
