@@ -1,6 +1,5 @@
 import hashlib
-import os
-from dotenv import load_dotenv, set_key
+import winreg
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QLineEdit,
     QPushButton, QMessageBox, QFormLayout, QFrame
@@ -8,8 +7,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-ENV_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
-ENV_PATH = os.path.abspath(ENV_PATH)
+REG_PATH = r"Software\KafedraSystem"
+REG_KEY  = "cfg"
 
 
 def _hash(password: str) -> str:
@@ -17,8 +16,17 @@ def _hash(password: str) -> str:
 
 
 def get_saved_hash() -> str:
-    load_dotenv(ENV_PATH, override=True)
-    return os.getenv("APP_INTEGRITY_HASH", "")
+    try:
+        key = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER, REG_PATH
+        )
+        value, _ = winreg.QueryValueEx(key, REG_KEY)
+        winreg.CloseKey(key)
+        return value
+    except FileNotFoundError:
+        return ""
+    except OSError:
+        return ""
 
 
 def is_password_set() -> bool:
@@ -30,7 +38,11 @@ def check_password(password: str) -> bool:
 
 
 def save_password(password: str):
-    set_key(ENV_PATH, "APP_INTEGRITY_HASH", _hash(password))
+    key = winreg.CreateKey(
+        winreg.HKEY_CURRENT_USER, REG_PATH
+    )
+    winreg.SetValueEx(key, REG_KEY, 0, winreg.REG_SZ, _hash(password))
+    winreg.CloseKey(key)
 
 
 class SecurityView(QWidget):
@@ -77,9 +89,6 @@ class SecurityView(QWidget):
                 background: transparent;
                 color: #2c3e50;
             }
-            QFrame[frameShape="4"] {
-                color: #dde1e5;
-            }
         """)
 
         # ── Заголовок ─────────────────────────────────────────────
@@ -97,27 +106,15 @@ class SecurityView(QWidget):
         sep1.setStyleSheet("color: #dde1e5;")
         layout.addWidget(sep1)
 
-        # ── Інфо блок ─────────────────────────────────────────────
-        info_frame = QFrame()
-        info_frame.setStyleSheet("""
-            QFrame {
-                background-color: #eaf2fb;
-                border: 1px solid #aed6f1;
-                border-radius: 6px;
-            }
-        """)
-        info_layout = QVBoxLayout(info_frame)
-        info_layout.setContentsMargins(16, 12, 16, 12)
-
-        layout.addSpacing(8)
-
         # ── Форма зміни пароля ────────────────────────────────────
         form_label = QLabel("Змінити пароль")
         fl = QFont()
         fl.setBold(True)
         fl.setPointSize(11)
         form_label.setFont(fl)
-        form_label.setStyleSheet("color: #2c3e50; background: transparent;")
+        form_label.setStyleSheet(
+            "color: #2c3e50; background: transparent;"
+        )
         layout.addWidget(form_label)
 
         sep2 = QFrame()
@@ -148,8 +145,8 @@ class SecurityView(QWidget):
         self.confirm_pass.setFixedHeight(32)
 
         form.addRow("Поточний пароль:", self.old_pass)
-        form.addRow("Новий пароль:", self.new_pass)
-        form.addRow("Підтвердження:", self.confirm_pass)
+        form.addRow("Новий пароль:",    self.new_pass)
+        form.addRow("Підтвердження:",   self.confirm_pass)
         layout.addLayout(form)
 
         layout.addSpacing(8)
@@ -183,16 +180,20 @@ class SecurityView(QWidget):
         layout.addStretch()
 
     def _change_password(self):
-        old = self.old_pass.text()
-        new = self.new_pass.text()
+        old     = self.old_pass.text()
+        new     = self.new_pass.text()
         confirm = self.confirm_pass.text()
 
         if not old:
-            QMessageBox.warning(self, "Помилка", "Введіть поточний пароль.")
+            QMessageBox.warning(
+                self, "Помилка", "Введіть поточний пароль."
+            )
             return
 
         if not check_password(old):
-            QMessageBox.warning(self, "Помилка", "Поточний пароль невірний.")
+            QMessageBox.warning(
+                self, "Помилка", "Поточний пароль невірний."
+            )
             self.old_pass.clear()
             self.old_pass.setFocus()
             return
@@ -205,7 +206,9 @@ class SecurityView(QWidget):
             return
 
         if new != confirm:
-            QMessageBox.warning(self, "Помилка", "Паролі не співпадають.")
+            QMessageBox.warning(
+                self, "Помилка", "Паролі не співпадають."
+            )
             self.confirm_pass.clear()
             self.confirm_pass.setFocus()
             return
@@ -214,4 +217,6 @@ class SecurityView(QWidget):
         self.old_pass.clear()
         self.new_pass.clear()
         self.confirm_pass.clear()
-        QMessageBox.information(self, "Успішно", "Пароль успішно змінено!")
+        QMessageBox.information(
+            self, "Успішно", "Пароль успішно змінено!"
+        )
